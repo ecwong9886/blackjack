@@ -1,37 +1,57 @@
 import random, time, os 
 
 deck = []
-hands = {}
-hands["dealer"] = []
-hands["player"] = []
-
+hands = {"dealer": [], "player": []}
 
 def generate_deck():
     for pip in range(1, 14):
-        for suit in ("Diamond", "Club", "Heart", "Spade"):
+        for suit in ("♦", "♣", "♥", "♠"):
             if pip > 1 and pip <= 10:
                 deck.append((str(pip), suit, pip))
             elif pip == 1:
-                deck.append(("Ace", suit, 1))
+                deck.append(("A", suit, 1))
             elif pip == 11:
-                deck.append(("Jack", suit, 10))
+                deck.append(("J", suit, 10))
             elif pip == 12:
-                deck.append(("Queen", suit, 10))
+                deck.append(("Q", suit, 10))
             elif pip == 13:
-                deck.append(("King", suit, 10))
+                deck.append(("K", suit, 10))
 
-def deal_card(person):
+def deal_card(person, start_deal = False):
     dealing_card = random.choice(deck)
     deck.remove(dealing_card)
     hands[person].append(dealing_card)
-    print(f"{dealing_card} was dealt to {person}.")
+    if not start_deal:
+        print(f"{dealing_card[0]}{dealing_card[1]} was dealt to {person}")
 
-def print_hand(person='both'):
-    if person == 'both':
-        print(f"\nDealer's hand: {hands['dealer']}")
-        print(f"Player's hand: {hands['player']}\n")
-    else:
-        print((f"\nPlayer's hand: {hands[person]}\n"))
+def print_hand(person, hide_first = False):
+
+    hand = hands[person]
+    header = " " + person.capitalize() + " "
+    lines = [[] for i in range(7)]
+    for index, card in enumerate(hand):
+        header = f">>>>{header}<<<<"
+
+        if hide_first and index == 0:
+            suit_symbol = "*"
+            pip_symbol = "  "
+        else:
+            suit_symbol = card[1]
+            pip_symbol = card[0] if card[0] == "10" else card[0] + " "
+
+        lines[0].append('┌───────┐')
+        lines[1].append('│ {}    │'.format(pip_symbol))
+        lines[2].append('│       │')
+        lines[3].append('│   {}   │'.format(suit_symbol))
+        lines[4].append('│       │')
+        lines[5].append('│     {}│'.format(pip_symbol))
+        lines[6].append('└───────┘')
+
+    print()
+    print(header)
+    for line in lines:
+        print(" ".join(line))
+    time.sleep(1)
 
 def start_game():
     os.system('cls')
@@ -39,17 +59,16 @@ def start_game():
     hands["dealer"].clear()
     hands["player"].clear()
     generate_deck()
-    print("* * *B L A C K J A C K * * *\n")
+    print("* * * * B L A C K J A C K * * * *\n")
     time.sleep(1)
-    deal_card("player")
+    print("Dealing...")
+    deal_card("player", True)
+    deal_card("dealer", True)
+    deal_card("player", True)
+    deal_card("dealer", True)
     time.sleep(1)
-    deal_card("dealer")
-    time.sleep(1)
-    deal_card("player")
-    time.sleep(1)
-    deal_card("dealer")
-    time.sleep(1)
-    print_hand()
+    print_hand("dealer", True)
+    print_hand("player")
 
 def check_blackjack(person):
     for card_i in hands[person]:
@@ -57,51 +76,59 @@ def check_blackjack(person):
             for card_j in hands[person]:
                 if card_j[2] == 10:
                     return True
-        else:
-            return False
+        
+    return False
         
 def get_total(person):
     total = 0
+    has_ace = False
     for card in hands[person]:
         total += card[2]
-    if card[2] == 1:
+        if card[2] == 1:
+            has_ace = True
+
+    if has_ace:     
         if total + 10 <= 21:
             return total + 10
-    else:
-        return total
+    
+    return total
 
 def player_turn():
-    time.sleep(1)
-    print("===== Player's turn =====\n")
     while get_total("player") <= 21:
         menu = input("1. Stand\n2. Hit\n")
         print()
         if menu == "1":
-            time.sleep(1)
             print("Player stands.")
-            time.sleep(1)
             break
         elif menu == "2":
-            time.sleep(1)
             deal_card("player")
             time.sleep(1)
             print_hand("player")
-            time.sleep(1)
 
 def dealer_turn():
-    print("\n===== Dealer's turn =====\n")
+    time.sleep(1)
+    print_hand("dealer")
     while get_total("dealer") < 17:
-        time.sleep(1)
         print("Dealer hits.\n")
         time.sleep(1)
         deal_card("dealer")
         time.sleep(1)
         print_hand("dealer")
-    time.sleep(1)
 
 
-print("* * * B L A C K J A C K * * *\n")
-input("Press Enter to start")
+input("""
+
+______ _            _    _            _    
+| ___ \ |          | |  (_)          | |   
+| |_/ / | __ _  ___| | ___  __ _  ___| | __
+| ___ \ |/ _` |/ __| |/ / |/ _` |/ __| |/ /
+| |_/ / | (_| | (__|   <| | (_| | (__|   < 
+\____/|_|\__,_|\___|_|\_\ |\__,_|\___|_|\_\.
+                       _/ |                
+                      |__/                 
+
+
+            Press Enter to start""")
 
 while True:
 
@@ -112,10 +139,12 @@ while True:
             print("Blackjacks for both player and dealer! Tie.")
         else:
             print("Blackjack for player! Player won.")
+        time.sleep(1)
         input("\nPress Enter to start a new game...")
         continue
     elif check_blackjack("dealer"):
         print("Blackjack for dealer. Dealer won.")
+        time.sleep(1)
         input("\nPress Enter to start a new game...")
         continue
 
@@ -123,7 +152,7 @@ while True:
 
     player_total = get_total("player")
     if player_total > 21:
-        print("Player busted! Dealer won.")
+        print("\nPlayer busted! Dealer won.")
         time.sleep(1)
         input("\nPress Enter to start a new game...")
         continue
@@ -132,15 +161,14 @@ while True:
 
     dealer_total = get_total("dealer")
     if dealer_total > 21:
-        print("Dealer busted! Player won.")
+        print("\nDealer busted! Player won.")
     else:
         print("Dealer stands.")
         time.sleep(1)
-        print("\n===== Final results =====")
-        print_hand()
+        print("\n====== Final results ======")
+        print(f"\nDealer total: {dealer_total}")
         time.sleep(1)
-        print(f"Player total: {player_total}")
-        print(f"Dealer total: {dealer_total}\n")
+        print(f"Player total: {player_total}\n")
         time.sleep(1)
         if player_total > dealer_total:
             print("Player won.")
